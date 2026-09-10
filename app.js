@@ -84,11 +84,75 @@ document.querySelectorAll(".tab").forEach(tab=>tab.onclick=()=>{
   tab.classList.add("active");document.querySelector("#"+tab.dataset.tab).classList.add("active");
 });
 
-document.querySelector("#checkoutButton").onclick=()=>{
-  if(!cart.length)return;
-  if(tg?.showPopup){
-    tg.showPopup({title:"Оформление заказа",message:"Демо-режим: подключим отправку заказа на следующем этапе.",buttons:[{type:"ok"}]});
-  }else alert("Демо-режим: подключим отправку заказа на следующем этапе.");
-};
+document.querySelector("#checkoutButton").onclick = async () => {
+  if (!cart.length) return;
 
+  const total = cart.reduce(
+    (sum, item) =>
+      sum + products.find(p => p.id === item.id).price * item.qty,
+    0
+  );
+
+  const items = cart.map(item => {
+    const product = products.find(p => p.id === item.id);
+
+    return {
+      name: product.name,
+      price: product.price,
+      qty: item.qty
+    };
+  });
+
+  const user = tg?.initDataUnsafe?.user || null;
+
+  try {
+    const response = await fetch(
+      "https://ghostmarket-theta.vercel.app/api/order",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          items,
+          total,
+          user
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!result.ok) {
+      throw new Error(result.error || "Ошибка отправки");
+    }
+
+    cart = [];
+    renderCart();
+    closeCart();
+
+    if (tg?.showPopup) {
+      tg.showPopup({
+        title: "Заказ принят 👻",
+        message: "Заказ успешно отправлен.",
+        buttons: [{ type: "ok" }]
+      });
+    } else {
+      alert("Заказ успешно отправлен!");
+    }
+
+  } catch (error) {
+    console.error(error);
+
+    if (tg?.showPopup) {
+      tg.showPopup({
+        title: "Ошибка",
+        message: "Не удалось отправить заказ. Попробуйте ещё раз.",
+        buttons: [{ type: "ok" }]
+      });
+    } else {
+      alert("Не удалось отправить заказ.");
+    }
+  }
+};
 renderCategories();renderProducts();renderCart();
