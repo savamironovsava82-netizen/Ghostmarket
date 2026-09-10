@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "name": "Annima Love Zombi",
+    "category": "Жидкости",
+    "image": "logo.jpg",
+    "flavors": [
+      {
+        "name": "Клубника",
+        "price": 500
+      },
+      {
+        "name": "Арбуз",
+        "price": 500
+      },
+      {
+        "name": "Манго",
+        "price": 550
+      },
+      {
+        "name": "Виноград",
+        "price": 500
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Испаритель",
+    "category": "Испарители",
+    "image": "logo.jpg",
+    "flavors": [
+      {
+        "name": "0.6 Ω",
+        "price": 350
+      },
+      {
+        "name": "0.8 Ω",
+        "price": 350
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Картридж",
+    "category": "Картриджи",
+    "image": "logo.jpg",
+    "flavors": [
+      {
+        "name": "0.6 Ω",
+        "price": 350
+      },
+      {
+        "name": "0.8 Ω",
+        "price": 350
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Аксессуар",
+    "category": "Аксессуары",
+    "image": "logo.jpg",
+    "flavors": [
+      {
+        "name": "Вариант 1",
+        "price": 500
+      },
+      {
+        "name": "Вариант 2",
+        "price": 600
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Одноразка",
+    "category": "Одноразки",
+    "image": "logo.jpg",
+    "flavors": [
+      {
+        "name": "Вариант 1",
+        "price": 700
+      },
+      {
+        "name": "Вариант 2",
+        "price": 700
+      }
+    ]
+  }
+]
