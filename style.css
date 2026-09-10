@@ -46,6 +46,10 @@ h1{font-size:25px;margin:2px 0;background:linear-gradient(90deg,#fff,#bb73ff);-w
    ОКНО ВЫБОРА ВКУСА
 ========================= */
 
+/* =========================
+   ОКНО ВЫБОРА ВКУСА
+========================= */
+
 #flavorModal {
   position: fixed;
   inset: 0;
@@ -60,11 +64,15 @@ h1{font-size:25px;margin:2px 0;background:linear-gradient(90deg,#fff,#bb73ff);-w
 .flavor-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.72);
 
   display: flex;
   align-items: flex-end;
   justify-content: center;
+
+  background: rgba(0, 0, 0, 0.72);
+
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .flavor-window {
@@ -72,100 +80,239 @@ h1{font-size:25px;margin:2px 0;background:linear-gradient(90deg,#fff,#bb73ff);-w
 
   width: 100%;
   max-width: 520px;
+  max-height: 90vh;
 
-  max-height: 88vh;
   overflow-y: auto;
 
-  background: #111;
-  border-radius: 24px 24px 0 0;
-
-  padding: 24px 18px 30px;
-
   box-sizing: border-box;
+
+  padding: 14px 16px 30px;
+
+  background: #101010;
+
+  border-radius: 26px 26px 0 0;
+
+  box-shadow:
+    0 -10px 40px rgba(0, 0, 0, 0.45);
+
+  animation: flavorOpen 0.25s ease-out;
 }
+
+@keyframes flavorOpen {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
+/* Верхняя полоска */
+
+.flavor-window::before {
+  content: "";
+
+  display: block;
+
+  width: 42px;
+  height: 4px;
+
+  margin: 0 auto 14px;
+
+  border-radius: 10px;
+
+  background: #3a3a3a;
+}
+
+
+/* Кнопка закрытия */
 
 .flavor-close {
   position: absolute;
 
-  top: 12px;
-  right: 14px;
+  top: 16px;
+  right: 16px;
 
   width: 38px;
   height: 38px;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
   border: 0;
   border-radius: 50%;
 
-  background: rgba(255,255,255,0.1);
-  color: white;
+  background: rgba(255, 255, 255, 0.09);
 
-  font-size: 28px;
+  color: #fff;
+
+  font-size: 27px;
+  line-height: 1;
 
   cursor: pointer;
+
+  z-index: 5;
 }
+
+.flavor-close:active {
+  transform: scale(0.92);
+}
+
+
+/* Фото товара */
 
 .flavor-image {
   display: block;
 
-  width: 150px;
-  height: 150px;
+  width: 180px;
+  height: 180px;
+
+  margin: 4px auto 20px;
 
   object-fit: cover;
 
-  border-radius: 18px;
+  border-radius: 22px;
 
-  margin: 0 auto 18px;
+  background: #1b1b1b;
+
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.35);
 }
+
+
+/* Название */
 
 .flavor-window h2 {
   margin: 0;
 
   text-align: center;
 
-  font-size: 24px;
+  color: #fff;
+
+  font-size: 25px;
+  font-weight: 800;
+
+  letter-spacing: -0.4px;
 }
 
+
+/* Подзаголовок */
+
 .flavor-subtitle {
-  margin: 7px 0 18px;
+  margin: 7px 0 20px;
 
   text-align: center;
 
-  color: #888;
+  color: #8d8d8d;
+
+  font-size: 14px;
 }
+
+
+/* Список вкусов */
 
 #flavorsList {
   display: flex;
+
   flex-direction: column;
-  gap: 10px;
+
+  gap: 9px;
 }
+
+
+/* Карточка вкуса */
 
 .flavor-item {
   width: 100%;
+  min-height: 62px;
 
   display: flex;
+
   align-items: center;
   justify-content: space-between;
 
-  padding: 16px 18px;
+  box-sizing: border-box;
 
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 15px;
+  padding: 12px 14px 12px 17px;
 
-  background: #1b1b1b;
+  border: 1px solid rgba(255, 255, 255, 0.07);
 
-  color: white;
+  border-radius: 17px;
 
-  font-size: 16px;
+  background: #181818;
+
+  color: #fff;
+
+  font-family: inherit;
+
+  text-align: left;
 
   cursor: pointer;
 
-  transition: 0.15s;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.flavor-item:hover {
+  background: #202020;
+
+  border-color: rgba(255, 255, 255, 0.13);
 }
 
 .flavor-item:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
 }
 
-.flavor-item strong {
+
+/* Название вкуса */
+
+.flavor-item span {
+  display: block;
+
   font-size: 16px;
+  font-weight: 600;
+}
+
+
+/* Цена */
+
+.flavor-item strong {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 82px;
+
+  padding: 9px 11px;
+
+  border-radius: 12px;
+
+  background: #fff;
+
+  color: #111;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+
+/* Полоса прокрутки */
+
+.flavor-window::-webkit-scrollbar {
+  width: 4px;
+}
+
+.flavor-window::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
 }
