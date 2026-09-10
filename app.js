@@ -1,158 +1,777 @@
 const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); }
+
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+
+// ===============================
+// ТОВАРЫ
+// ===============================
 
 const products = [
-  {id:1,name:"Товар 01",category:"Новинки",price:650,image:"logo.jpg"},
-  {id:2,name:"Товар 02",category:"Хиты",price:750,image:"logo.jpg"},
-  {id:3,name:"Товар 03",category:"Новинки",price:900,image:"logo.jpg"},
-  {id:4,name:"Товар 04",category:"Аксессуары",price:500,image:"logo.jpg"}
+  {
+    id: 1,
+    name: "Аниме Лав",
+    category: "Жидкости",
+    image: "anime-love.jpg",
+
+    flavors: [
+      { name: "Клубника", price: 500 },
+      { name: "Арбуз", price: 500 },
+      { name: "Манго", price: 550 },
+      { name: "Виноград", price: 500 }
+    ]
+  },
+
+  {
+    id: 2,
+    name: "Товар 02",
+    category: "Жидкости",
+    image: "logo.jpg",
+
+    flavors: [
+      { name: "Вкус 1", price: 500 },
+      { name: "Вкус 2", price: 500 },
+      { name: "Вкус 3", price: 550 }
+    ]
+  },
+
+  {
+    id: 3,
+    name: "Товар 03",
+    category: "Жидкости",
+    image: "logo.jpg",
+
+    flavors: [
+      { name: "Вкус 1", price: 600 },
+      { name: "Вкус 2", price: 600 }
+    ]
+  }
 ];
 
-let category="Все";
-let cart=[];
 
-const categoriesEl=document.querySelector("#categories");
-const productsEl=document.querySelector("#products");
-const searchEl=document.querySelector("#search");
-const cartButton=document.querySelector("#cartButton");
-const cartTotal=document.querySelector("#cartTotal");
-const sheetTotal=document.querySelector("#sheetTotal");
-const cartItems=document.querySelector("#cartItems");
-const sheet=document.querySelector("#cartSheet");
-const backdrop=document.querySelector("#backdrop");
+// ===============================
+// СОСТОЯНИЕ
+// ===============================
 
-function money(n){return new Intl.NumberFormat("ru-RU").format(n)+" ₽"}
+let category = "Все";
+let cart = [];
 
-function renderCategories(){
-  const cats=["Все",...new Set(products.map(p=>p.category))];
-  categoriesEl.innerHTML=cats.map(c=>`<button class="category ${c===category?"active":""}" data-category="${c}">${c}</button>`).join("");
-  categoriesEl.querySelectorAll(".category").forEach(b=>b.onclick=()=>{category=b.dataset.category;renderCategories();renderProducts()});
+let selectedProduct = null;
+
+
+// ===============================
+// ЭЛЕМЕНТЫ
+// ===============================
+
+const categoriesEl = document.querySelector("#categories");
+const productsEl = document.querySelector("#products");
+const searchEl = document.querySelector("#search");
+
+const cartButton = document.querySelector("#cartButton");
+const cartTotal = document.querySelector("#cartTotal");
+const sheetTotal = document.querySelector("#sheetTotal");
+const cartItems = document.querySelector("#cartItems");
+
+const sheet = document.querySelector("#cartSheet");
+const backdrop = document.querySelector("#backdrop");
+
+
+// ===============================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ===============================
+
+function money(n) {
+  return new Intl.NumberFormat("ru-RU").format(n) + " ₽";
 }
 
-function renderProducts(){
-  const q=searchEl.value.trim().toLowerCase();
-  const list=products.filter(p=>(category==="Все"||p.category===category)&&p.name.toLowerCase().includes(q));
-  productsEl.innerHTML=list.map(p=>`
-    <article class="product">
-      <img class="product-img" src="${p.image}" alt="">
-      <div class="product-body">
-        <div class="product-name">${p.name}</div>
-        <div class="product-meta">${p.category}</div>
-        <div class="product-bottom">
-          <span class="price">${money(p.price)}</span>
-          <button class="add" data-id="${p.id}">В корзину</button>
-        </div>
-      </div>
-    </article>`).join("") || `<div class="empty" style="grid-column:1/-1"><h2>Ничего не найдено</h2></div>`;
-  productsEl.querySelectorAll(".add").forEach(b=>b.onclick=()=>addToCart(+b.dataset.id));
+
+// ===============================
+// КАТЕГОРИИ
+// ===============================
+
+function renderCategories() {
+
+  const cats = [
+    "Все",
+    ...new Set(products.map(p => p.category))
+  ];
+
+  categoriesEl.innerHTML = cats
+    .map(c => `
+      <button
+        class="category ${c === category ? "active" : ""}"
+        data-category="${c}"
+      >
+        ${c}
+      </button>
+    `)
+    .join("");
+
+  categoriesEl
+    .querySelectorAll(".category")
+    .forEach(button => {
+
+      button.onclick = () => {
+
+        category = button.dataset.category;
+
+        renderCategories();
+        renderProducts();
+      };
+
+    });
 }
 
-function addToCart(id){
-  const item=cart.find(x=>x.id===id);
-  if(item)item.qty++; else cart.push({id,qty:1});
-  renderCart();
-  openCart();
-}
-function changeQty(id,delta){
-  const item=cart.find(x=>x.id===id); if(!item)return;
-  item.qty+=delta;if(item.qty<=0)cart=cart.filter(x=>x.id!==id);
-  renderCart();
-}
-function renderCart(){
-  const total=cart.reduce((s,x)=>s+(products.find(p=>p.id===x.id).price*x.qty),0);
-  cartTotal.textContent=money(total);sheetTotal.textContent=money(total);
-  cartButton.classList.toggle("hidden",cart.length===0);
-  cartItems.innerHTML=cart.length?cart.map(x=>{
-    const p=products.find(p=>p.id===x.id);
-    return `<div class="cart-row">
-      <img src="${p.image}" alt=""><div class="cart-info"><b>${p.name}</b><div class="product-meta">${money(p.price)} × ${x.qty}</div></div>
-      <div class="qty"><button onclick="changeQty(${p.id},-1)">−</button><b>${x.qty}</b><button onclick="changeQty(${p.id},1)">+</button></div>
-    </div>`;
-  }).join(""):`<div class="empty"><h2>Корзина пуста</h2></div>`;
-}
-function openCart(){sheet.classList.add("open");backdrop.classList.add("open")}
-function closeCart(){sheet.classList.remove("open");backdrop.classList.remove("open")}
 
-cartButton.onclick=openCart;
-document.querySelector("#closeCart").onclick=closeCart;
-backdrop.onclick=closeCart;
-searchEl.oninput=renderProducts;
+// ===============================
+// КАТАЛОГ
+// ===============================
 
-document.querySelectorAll(".tab").forEach(tab=>tab.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
-  tab.classList.add("active");document.querySelector("#"+tab.dataset.tab).classList.add("active");
-});
+function renderProducts() {
 
-document.querySelector("#checkoutButton").onclick = async () => {
-  if (!cart.length) return;
+  const q = searchEl.value
+    .trim()
+    .toLowerCase();
 
-  const total = cart.reduce(
-    (sum, item) =>
-      sum + products.find(p => p.id === item.id).price * item.qty,
-    0
-  );
+  const list = products.filter(product => {
 
-  const items = cart.map(item => {
-    const product = products.find(p => p.id === item.id);
+    const categoryMatch =
+      category === "Все" ||
+      product.category === category;
 
-    return {
-      name: product.name,
-      price: product.price,
-      qty: item.qty
-    };
+    const searchMatch =
+      product.name.toLowerCase().includes(q);
+
+    return categoryMatch && searchMatch;
   });
 
-  const user = tg?.initDataUnsafe?.user || null;
 
-  try {
-    const response = await fetch(
-      "https://ghostmarket-theta.vercel.app/api/order",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          items,
-          total,
-          user
-        })
-      }
+  productsEl.innerHTML = list
+    .map(product => `
+
+      <article class="product">
+
+        <img
+          class="product-img"
+          src="${product.image}"
+          alt="${product.name}"
+        >
+
+        <div class="product-body">
+
+          <div class="product-name">
+            ${product.name}
+          </div>
+
+          <div class="product-meta">
+            ${product.category}
+          </div>
+
+          <div class="product-bottom">
+
+            <span class="price">
+              от ${money(Math.min(
+                ...product.flavors.map(f => f.price)
+              ))}
+            </span>
+
+            <button
+              class="add"
+              data-id="${product.id}"
+            >
+              Выбрать
+            </button>
+
+          </div>
+
+        </div>
+
+      </article>
+
+    `)
+    .join("");
+
+
+  productsEl
+    .querySelectorAll(".add")
+    .forEach(button => {
+
+      button.onclick = () => {
+
+        const productId =
+          Number(button.dataset.id);
+
+        openFlavorSelector(productId);
+
+      };
+
+    });
+
+
+  if (!list.length) {
+
+    productsEl.innerHTML = `
+      <div
+        class="empty"
+        style="grid-column:1/-1"
+      >
+        <h2>Ничего не найдено</h2>
+      </div>
+    `;
+  }
+}
+
+
+// ===============================
+// ОКНО ВЫБОРА ВКУСА
+// ===============================
+
+function openFlavorSelector(productId) {
+
+  selectedProduct =
+    products.find(p => p.id === productId);
+
+  if (!selectedProduct) return;
+
+
+  let modal =
+    document.querySelector("#flavorModal");
+
+
+  if (!modal) {
+
+    modal = document.createElement("div");
+
+    modal.id = "flavorModal";
+
+    modal.innerHTML = `
+      <div class="flavor-overlay">
+
+        <div class="flavor-window">
+
+          <button
+            id="closeFlavor"
+            class="flavor-close"
+          >
+            ×
+          </button>
+
+          <img
+            id="flavorImage"
+            class="flavor-image"
+            src=""
+            alt=""
+          >
+
+          <h2 id="flavorTitle"></h2>
+
+          <p class="flavor-subtitle">
+            Выберите вкус
+          </p>
+
+          <div id="flavorsList"></div>
+
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+
+    document.querySelector("#closeFlavor").onclick =
+      closeFlavorSelector;
+
+
+    modal
+      .querySelector(".flavor-overlay")
+      .onclick = (event) => {
+
+        if (
+          event.target.classList.contains(
+            "flavor-overlay"
+          )
+        ) {
+          closeFlavorSelector();
+        }
+
+      };
+  }
+
+
+  document.querySelector("#flavorImage").src =
+    selectedProduct.image;
+
+  document.querySelector("#flavorTitle").textContent =
+    selectedProduct.name;
+
+
+  const flavorsList =
+    document.querySelector("#flavorsList");
+
+
+  flavorsList.innerHTML =
+    selectedProduct.flavors
+      .map((flavor, index) => `
+
+        <button
+          class="flavor-item"
+          data-flavor="${index}"
+        >
+
+          <span>
+            ${flavor.name}
+          </span>
+
+          <strong>
+            ${money(flavor.price)}
+          </strong>
+
+        </button>
+
+      `)
+      .join("");
+
+
+  flavorsList
+    .querySelectorAll(".flavor-item")
+    .forEach(button => {
+
+      button.onclick = () => {
+
+        const index =
+          Number(button.dataset.flavor);
+
+        addFlavorToCart(
+          selectedProduct,
+          selectedProduct.flavors[index]
+        );
+
+      };
+
+    });
+
+
+  modal.classList.add("open");
+}
+
+
+function closeFlavorSelector() {
+
+  const modal =
+    document.querySelector("#flavorModal");
+
+  if (modal) {
+    modal.classList.remove("open");
+  }
+
+}
+
+
+// ===============================
+// ДОБАВЛЕНИЕ В КОРЗИНУ
+// ===============================
+
+function addFlavorToCart(product, flavor) {
+
+  const existing =
+    cart.find(item =>
+      item.productId === product.id &&
+      item.flavorName === flavor.name
     );
 
-    const result = await response.json();
 
-    if (!result.ok) {
-      throw new Error(result.error || "Ошибка отправки");
-    }
+  if (existing) {
 
-    cart = [];
-    renderCart();
-    closeCart();
+    existing.qty++;
 
-    if (tg?.showPopup) {
-      tg.showPopup({
-        title: "Заказ принят 👻",
-        message: "Заказ успешно отправлен.",
-        buttons: [{ type: "ok" }]
-      });
-    } else {
-      alert("Заказ успешно отправлен!");
-    }
+  } else {
 
-  } catch (error) {
-    console.error(error);
+    cart.push({
 
-    if (tg?.showPopup) {
-      tg.showPopup({
-        title: "Ошибка",
-        message: "Не удалось отправить заказ. Попробуйте ещё раз.",
-        buttons: [{ type: "ok" }]
-      });
-    } else {
-      alert("Не удалось отправить заказ.");
-    }
+      productId: product.id,
+
+      productName: product.name,
+
+      flavorName: flavor.name,
+
+      price: flavor.price,
+
+      qty: 1
+
+    });
+
   }
-};
-renderCategories();renderProducts();renderCart();
+
+
+  renderCart();
+
+  closeFlavorSelector();
+
+  openCart();
+}
+
+
+// ===============================
+// КОЛИЧЕСТВО
+// ===============================
+
+function changeQty(productId, flavorName, delta) {
+
+  const item =
+    cart.find(x =>
+      x.productId === productId &&
+      x.flavorName === flavorName
+    );
+
+
+  if (!item) return;
+
+
+  item.qty += delta;
+
+
+  if (item.qty <= 0) {
+
+    cart = cart.filter(x =>
+      !(
+        x.productId === productId &&
+        x.flavorName === flavorName
+      )
+    );
+
+  }
+
+
+  renderCart();
+}
+
+
+// ===============================
+// КОРЗИНА
+// ===============================
+
+function renderCart() {
+
+  const total =
+    cart.reduce(
+      (sum, item) =>
+        sum + item.price * item.qty,
+      0
+    );
+
+
+  cartTotal.textContent =
+    money(total);
+
+  sheetTotal.textContent =
+    money(total);
+
+
+  cartButton.classList.toggle(
+    "hidden",
+    cart.length === 0
+  );
+
+
+  if (!cart.length) {
+
+    cartItems.innerHTML = `
+      <div class="empty">
+        <h2>Корзина пуста</h2>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  cartItems.innerHTML =
+    cart.map(item => `
+
+      <div class="cart-row">
+
+        <div class="cart-info">
+
+          <b>
+            ${item.productName}
+          </b>
+
+          <div class="product-meta">
+            ${item.flavorName}
+          </div>
+
+          <div class="product-meta">
+            ${money(item.price)} × ${item.qty}
+          </div>
+
+        </div>
+
+
+        <div class="qty">
+
+          <button
+            onclick='changeQty(
+              ${item.productId},
+              ${JSON.stringify(item.flavorName)},
+              -1
+            )'
+          >
+            −
+          </button>
+
+          <b>
+            ${item.qty}
+          </b>
+
+          <button
+            onclick='changeQty(
+              ${item.productId},
+              ${JSON.stringify(item.flavorName)},
+              1
+            )'
+          >
+            +
+          </button>
+
+        </div>
+
+      </div>
+
+    `)
+    .join("");
+}
+
+
+// ===============================
+// ОТКРЫТИЕ КОРЗИНЫ
+// ===============================
+
+function openCart() {
+
+  sheet.classList.add("open");
+
+  backdrop.classList.add("open");
+}
+
+
+function closeCart() {
+
+  sheet.classList.remove("open");
+
+  backdrop.classList.remove("open");
+}
+
+
+cartButton.onclick = openCart;
+
+document.querySelector("#closeCart").onclick =
+  closeCart;
+
+backdrop.onclick =
+  closeCart;
+
+
+// ===============================
+// ПОИСК
+// ===============================
+
+searchEl.oninput =
+  renderProducts;
+
+
+// ===============================
+// ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+// ===============================
+
+document
+  .querySelectorAll(".tab")
+  .forEach(tab => {
+
+    tab.onclick = () => {
+
+      document
+        .querySelectorAll(".tab")
+        .forEach(x =>
+          x.classList.remove("active")
+        );
+
+      document
+        .querySelectorAll(".screen")
+        .forEach(x =>
+          x.classList.remove("active")
+        );
+
+
+      tab.classList.add("active");
+
+      document
+        .querySelector(
+          "#" + tab.dataset.tab
+        )
+        .classList.add("active");
+
+    };
+
+  });
+
+
+// ===============================
+// ОФОРМЛЕНИЕ ЗАКАЗА
+// ===============================
+
+document
+  .querySelector("#checkoutButton")
+  .onclick = async () => {
+
+    if (!cart.length) return;
+
+
+    const total =
+      cart.reduce(
+        (sum, item) =>
+          sum + item.price * item.qty,
+        0
+      );
+
+
+    const items =
+      cart.map(item => ({
+
+        name:
+          `${item.productName} — ${item.flavorName}`,
+
+        price:
+          item.price,
+
+        qty:
+          item.qty
+
+      }));
+
+
+    const user =
+      tg?.initDataUnsafe?.user || null;
+
+
+    try {
+
+      const response =
+        await fetch(
+          "https://ghostmarket-theta.vercel.app/api/order",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+
+              items,
+              total,
+              user
+
+            })
+
+          }
+        );
+
+
+      const result =
+        await response.json();
+
+
+      if (!result.ok) {
+
+        throw new Error(
+          result.error ||
+          "Ошибка отправки"
+        );
+
+      }
+
+
+      cart = [];
+
+      renderCart();
+
+      closeCart();
+
+
+      if (tg?.showPopup) {
+
+        tg.showPopup({
+
+          title:
+            "Заказ принят 👻",
+
+          message:
+            "Заказ успешно отправлен.",
+
+          buttons: [
+            {
+              type: "ok"
+            }
+          ]
+
+        });
+
+      } else {
+
+        alert(
+          "Заказ успешно отправлен!"
+        );
+
+      }
+
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      if (tg?.showPopup) {
+
+        tg.showPopup({
+
+          title:
+            "Ошибка",
+
+          message:
+            "Не удалось отправить заказ. Попробуйте ещё раз.",
+
+          buttons: [
+            {
+              type: "ok"
+            }
+          ]
+
+        });
+
+      } else {
+
+        alert(
+          "Не удалось отправить заказ."
+        );
+
+      }
+
+    }
+
+  };
+
+
+// ===============================
+// ЗАПУСК
+// ===============================
+
+renderCategories();
+
+renderProducts();
+
+renderCart();
