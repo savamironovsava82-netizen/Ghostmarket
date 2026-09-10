@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>GhostMarket</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <img class="logo" src="logo.jpg" alt="GhostShop">
+      <div>
+        <div class="eyebrow">GHOSTSHOP</div>
+        <h1>GHOSTMARKET</h1>
+        <p>Фирменный магазин</p>
+      </div>
+    </header>
+
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Поиск товара">
+    </div>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="catalog">Каталог</button>
+      <button class="tab" data-tab="orders">Мои заказы</button>
+    </nav>
+
+    <main>
+      <section id="catalog" class="screen active">
+        <div id="categories" class="categories"></div>
+        <div id="products" class="products"></div>
+      </section>
+
+      <section id="orders" class="screen">
+        <div class="empty">
+          <div class="empty-icon">👻</div>
+          <h2>Заказов пока нет</h2>
+          <p>Здесь будут отображаться ваши заказы.</p>
+        </div>
+      </section>
+    </main>
+
+    <button id="cartButton" class="cart hidden">
+      <span>Корзина</span>
+      <strong id="cartTotal">0 ₽</strong>
+    </button>
+
+    <div id="cartSheet" class="sheet">
+      <div class="sheet-head">
+        <h2>Корзина</h2>
+        <button id="closeCart" class="close">×</button>
+      </div>
+      <div id="cartItems"></div>
+      <div class="checkout">
+        <div><span>Итого</span><strong id="sheetTotal">0 ₽</strong></div>
+        <button id="checkoutButton">Оформить заказ</button>
+      </div>
+    </div>
+    <div id="backdrop" class="backdrop"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
