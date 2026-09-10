@@ -764,8 +764,6 @@ document
 // ЗАПУСК
 // ===============================
 
-renderCategories();
-
-renderProducts();
+loadProducts();
 
 renderCart();
