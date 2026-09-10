@@ -1,6 +1,17 @@
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "Method not allowed" });
+    return res.status(405).json({
+      ok: false,
+      error: "Method not allowed"
+    });
   }
 
   try {
@@ -17,7 +28,9 @@ export default async function handler(req, res) {
     }
 
     const itemText = items
-      .map(item => `• ${item.name} × ${item.qty} — ${item.price * item.qty} ₽`)
+      .map(item =>
+        `• ${item.name} × ${item.qty} — ${item.price * item.qty} ₽`
+      )
       .join("\n");
 
     const message =
@@ -27,7 +40,7 @@ export default async function handler(req, res) {
       `📦 <b>Товары:</b>\n${itemText}\n\n` +
       `💰 <b>Итого: ${total} ₽</b>`;
 
-    const response = await fetch(
+    const telegramResponse = await fetch(
       `https://api.telegram.org/bot${token}/sendMessage`,
       {
         method: "POST",
@@ -42,7 +55,7 @@ export default async function handler(req, res) {
       }
     );
 
-    const result = await response.json();
+    const result = await telegramResponse.json();
 
     if (!result.ok) {
       return res.status(500).json({
@@ -51,9 +64,13 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({
+      ok: true
+    });
 
   } catch (error) {
+    console.error(error);
+
     return res.status(500).json({
       ok: false,
       error: error.message
