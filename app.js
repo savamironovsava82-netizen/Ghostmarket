@@ -9,62 +9,43 @@ if (tg) {
 // ===============================
 // ТОВАРЫ
 // ===============================
-const products = [
+let products = [];
 
-  // =========================
-  // ЖИДКОСТИ
-  // =========================
+async function loadProducts() {
+  try {
+    const response = await fetch("/api/products");
 
-  {
-    id: 1,
-    name: "Annima Love Zombi",
-    category: "Жидкости",
-    image: "anime-love.jpg",
+    if (!response.ok) {
+      throw new Error("Не удалось загрузить товары");
+    }
 
-    flavors: [
-      { name: "Клубника", price: 500 },
-      { name: "Арбуз", price: 500 },
-      { name: "Манго", price: 550 },
-      { name: "Виноград", price: 500 }
-    ]
-  },
+    const data = await response.json();
 
+    if (!data.ok || !Array.isArray(data.products)) {
+      throw new Error("Неверный формат товаров");
+    }
 
-  // =========================
-  // ИСПАРИТЕЛИ
-  // =========================
+    products = data.products;
 
-  {
-    id: 2,
-    name: "Испаритель",
-    category: "Испарители",
-    image: "logo.jpg",
+    renderCategories();
+    renderProducts();
 
-    flavors: [
-      { name: "0.6 Ω", price: 350 },
-      { name: "0.8 Ω", price: 350 }
-    ]
-  },
+  } catch (error) {
+    console.error("Ошибка загрузки товаров:", error);
 
+    const productsContainer = document.getElementById("products");
 
-  // =========================
-  // АКСЕССУАРЫ
-  // =========================
-
-  {
-    id: 3,
-    name: "Аксессуар",
-    category: "Аксессуары",
-    image: "logo.jpg",
-
-    flavors: [
-      { name: "Вариант 1", price: 500 },
-      { name: "Вариант 2", price: 600 }
-    ]
+    if (productsContainer) {
+      productsContainer.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">👻</div>
+          <h2>Каталог временно недоступен</h2>
+          <p>Попробуйте обновить приложение.</p>
+        </div>
+      `;
+    }
   }
-
-];
-
+}
 // ===============================
 // СОСТОЯНИЕ
 // ===============================
