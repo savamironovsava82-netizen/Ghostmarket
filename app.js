@@ -13,7 +13,7 @@ if (tg) {
 const products = [
   {
     id: 1,
-    name: "Аниме Лав",
+    name: "Annima Love Zombi",
     category: "Жидкости",
     image: "anime-love.jpg",
 
