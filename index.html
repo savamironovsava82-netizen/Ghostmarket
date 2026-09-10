@@ -60,6 +60,10 @@
     </div>
     <div id="backdrop" class="backdrop"></div>
   </div>
-<script src="app.js?v=1"></script>
+<script>
+  const script = document.createElement("script");
+  script.src = "app.js?v=" + Date.now();
+  document.body.appendChild(script);
+</script>
 </body>
 </html>
