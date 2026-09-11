@@ -1,3 +1,4 @@
+```javascript
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -5,10 +6,10 @@ if (tg) {
   tg.expand();
 }
 
-
 // ===============================
 // ТОВАРЫ
 // ===============================
+
 let products = [];
 
 async function loadProducts() {
@@ -25,16 +26,22 @@ async function loadProducts() {
       throw new Error("Неверный формат товаров");
     }
 
-products = data.products;
+    products = data.products;
 
-console.log("Товары загружены:", products);
+    console.log("Товары загружены:", products);
 
-renderCategories();
-renderProducts();
+    renderCategories();
+    renderProducts();
+
+    if (document.querySelector("#adminPanel")) {
+      renderAdminProducts();
+    }
+
   } catch (error) {
     console.error("Ошибка загрузки товаров:", error);
 
-    const productsContainer = document.getElementById("products");
+    const productsContainer =
+      document.getElementById("products");
 
     if (productsContainer) {
       productsContainer.innerHTML = `
@@ -47,41 +54,53 @@ renderProducts();
     }
   }
 }
+
 // ===============================
 // СОСТОЯНИЕ
 // ===============================
 
 let category = "Все";
 let cart = [];
-
 let selectedProduct = null;
-
 
 // ===============================
 // ЭЛЕМЕНТЫ
 // ===============================
 
-const categoriesEl = document.querySelector("#categories");
-const productsEl = document.querySelector("#products");
-const searchEl = document.querySelector("#search");
+const categoriesEl =
+  document.querySelector("#categories");
 
-const cartButton = document.querySelector("#cartButton");
-const cartTotal = document.querySelector("#cartTotal");
-const sheetTotal = document.querySelector("#sheetTotal");
-const cartItems = document.querySelector("#cartItems");
+const productsEl =
+  document.querySelector("#products");
 
-const sheet = document.querySelector("#cartSheet");
-const backdrop = document.querySelector("#backdrop");
+const searchEl =
+  document.querySelector("#search");
 
+const cartButton =
+  document.querySelector("#cartButton");
+
+const cartTotal =
+  document.querySelector("#cartTotal");
+
+const sheetTotal =
+  document.querySelector("#sheetTotal");
+
+const cartItems =
+  document.querySelector("#cartItems");
+
+const sheet =
+  document.querySelector("#cartSheet");
+
+const backdrop =
+  document.querySelector("#backdrop");
 
 // ===============================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ВСПОМОГАТЕЛЬНЫЕ
 // ===============================
 
 function money(n) {
   return new Intl.NumberFormat("ru-RU").format(n) + " ₽";
 }
-
 
 // ===============================
 // КАТЕГОРИИ
@@ -91,7 +110,9 @@ function renderCategories() {
 
   const cats = [
     "Все",
-    ...new Set(products.map(p => p.category))
+    ...new Set(
+      products.map(p => p.category)
+    )
   ];
 
   categoriesEl.innerHTML = cats
@@ -111,7 +132,8 @@ function renderCategories() {
 
       button.onclick = () => {
 
-        category = button.dataset.category;
+        category =
+          button.dataset.category;
 
         renderCategories();
         renderProducts();
@@ -120,75 +142,86 @@ function renderCategories() {
     });
 }
 
-
 // ===============================
 // КАТАЛОГ
 // ===============================
 
 function renderProducts() {
 
-  const q = searchEl.value
-    .trim()
-    .toLowerCase();
+  const q =
+    searchEl.value
+      .trim()
+      .toLowerCase();
 
-  const list = products.filter(product => {
+  const list =
+    products.filter(product => {
 
-    const categoryMatch =
-      category === "Все" ||
-      product.category === category;
+      const categoryMatch =
+        category === "Все" ||
+        product.category === category;
 
-    const searchMatch =
-      product.name.toLowerCase().includes(q);
+      const searchMatch =
+        product.name
+          .toLowerCase()
+          .includes(q);
 
-    return categoryMatch && searchMatch;
-  });
+      return categoryMatch && searchMatch;
+    });
 
+  productsEl.innerHTML =
+    list
+      .map(product => {
 
-  productsEl.innerHTML = list
-    .map(product => `
+        const prices =
+          Array.isArray(product.flavors)
+            ? product.flavors.map(f => Number(f.price))
+            : [0];
 
-      <article class="product">
+        const minPrice =
+          prices.length
+            ? Math.min(...prices)
+            : 0;
 
-        <img
-          class="product-img"
-          src="${product.image}"
-          alt="${product.name}"
-        >
+        return `
+          <article class="product">
 
-        <div class="product-body">
-
-          <div class="product-name">
-            ${product.name}
-          </div>
-
-          <div class="product-meta">
-            ${product.category}
-          </div>
-
-          <div class="product-bottom">
-
-            <span class="price">
-              от ${money(Math.min(
-                ...product.flavors.map(f => f.price)
-              ))}
-            </span>
-
-            <button
-              class="add"
-              data-id="${product.id}"
+            <img
+              class="product-img"
+              src="${product.image || "logo.jpg"}"
+              alt="${product.name}"
             >
-              Выбрать
-            </button>
 
-          </div>
+            <div class="product-body">
 
-        </div>
+              <div class="product-name">
+                ${product.name}
+              </div>
 
-      </article>
+              <div class="product-meta">
+                ${product.category}
+              </div>
 
-    `)
-    .join("");
+              <div class="product-bottom">
 
+                <span class="price">
+                  от ${money(minPrice)}
+                </span>
+
+                <button
+                  class="add"
+                  data-id="${product.id}"
+                >
+                  Выбрать
+                </button>
+
+              </div>
+
+            </div>
+
+          </article>
+        `;
+      })
+      .join("");
 
   productsEl
     .querySelectorAll(".add")
@@ -200,11 +233,9 @@ function renderProducts() {
           Number(button.dataset.id);
 
         openFlavorSelector(productId);
-
       };
 
     });
-
 
   if (!list.length) {
 
@@ -219,26 +250,26 @@ function renderProducts() {
   }
 }
 
-
 // ===============================
-// ОКНО ВЫБОРА ВКУСА
+// ВЫБОР ВАРИАНТА
 // ===============================
 
 function openFlavorSelector(productId) {
 
   selectedProduct =
-    products.find(p => p.id === productId);
+    products.find(
+      p => p.id === productId
+    );
 
   if (!selectedProduct) return;
-
 
   let modal =
     document.querySelector("#flavorModal");
 
-
   if (!modal) {
 
-    modal = document.createElement("div");
+    modal =
+      document.createElement("div");
 
     modal.id = "flavorModal";
 
@@ -264,7 +295,7 @@ function openFlavorSelector(productId) {
           <h2 id="flavorTitle"></h2>
 
           <p class="flavor-subtitle">
-            Выберите вкус
+            Выберите вариант
           </p>
 
           <div id="flavorsList"></div>
@@ -276,19 +307,16 @@ function openFlavorSelector(productId) {
 
     document.body.appendChild(modal);
 
-
-    document.querySelector("#closeFlavor").onclick =
-      closeFlavorSelector;
-
+    document.querySelector("#closeFlavor")
+      .onclick = closeFlavorSelector;
 
     modal
       .querySelector(".flavor-overlay")
-      .onclick = (event) => {
+      .onclick = event => {
 
         if (
-          event.target.classList.contains(
-            "flavor-overlay"
-          )
+          event.target.classList
+            .contains("flavor-overlay")
         ) {
           closeFlavorSelector();
         }
@@ -296,27 +324,23 @@ function openFlavorSelector(productId) {
       };
   }
 
-
   document.querySelector("#flavorImage").src =
-    selectedProduct.image;
+    selectedProduct.image || "logo.jpg";
 
-  document.querySelector("#flavorTitle").textContent =
-    selectedProduct.name;
-
+  document.querySelector("#flavorTitle")
+    .textContent =
+      selectedProduct.name;
 
   const flavorsList =
     document.querySelector("#flavorsList");
 
-
   flavorsList.innerHTML =
     selectedProduct.flavors
       .map((flavor, index) => `
-
         <button
           class="flavor-item"
           data-flavor="${index}"
         >
-
           <span>
             ${flavor.name}
           </span>
@@ -324,12 +348,9 @@ function openFlavorSelector(productId) {
           <strong>
             ${money(flavor.price)}
           </strong>
-
         </button>
-
       `)
       .join("");
-
 
   flavorsList
     .querySelectorAll(".flavor-item")
@@ -344,15 +365,12 @@ function openFlavorSelector(productId) {
           selectedProduct,
           selectedProduct.flavors[index]
         );
-
       };
 
     });
 
-
   modal.classList.add("open");
 }
-
 
 function closeFlavorSelector() {
 
@@ -362,12 +380,10 @@ function closeFlavorSelector() {
   if (modal) {
     modal.classList.remove("open");
   }
-
 }
 
-
 // ===============================
-// ДОБАВЛЕНИЕ В КОРЗИНУ
+// КОРЗИНА
 // ===============================
 
 function addFlavorToCart(product, flavor) {
@@ -378,7 +394,6 @@ function addFlavorToCart(product, flavor) {
       item.flavorName === flavor.name
     );
 
-
   if (existing) {
 
     existing.qty++;
@@ -386,35 +401,25 @@ function addFlavorToCart(product, flavor) {
   } else {
 
     cart.push({
-
       productId: product.id,
-
       productName: product.name,
-
       flavorName: flavor.name,
-
-      price: flavor.price,
-
+      price: Number(flavor.price),
       qty: 1
-
     });
 
   }
 
-
   renderCart();
-
   closeFlavorSelector();
-
   openCart();
 }
 
-
-// ===============================
-// КОЛИЧЕСТВО
-// ===============================
-
-function changeQty(productId, flavorName, delta) {
+function changeQty(
+  productId,
+  flavorName,
+  delta
+) {
 
   const item =
     cart.find(x =>
@@ -422,42 +427,34 @@ function changeQty(productId, flavorName, delta) {
       x.flavorName === flavorName
     );
 
-
   if (!item) return;
-
 
   item.qty += delta;
 
-
   if (item.qty <= 0) {
 
-    cart = cart.filter(x =>
-      !(
-        x.productId === productId &&
-        x.flavorName === flavorName
-      )
-    );
-
+    cart =
+      cart.filter(x =>
+        !(
+          x.productId === productId &&
+          x.flavorName === flavorName
+        )
+      );
   }
-
 
   renderCart();
 }
-
-
-// ===============================
-// КОРЗИНА
-// ===============================
 
 function renderCart() {
 
   const total =
     cart.reduce(
       (sum, item) =>
-        sum + item.price * item.qty,
+        sum +
+        item.price *
+        item.qty,
       0
     );
-
 
   cartTotal.textContent =
     money(total);
@@ -465,12 +462,10 @@ function renderCart() {
   sheetTotal.textContent =
     money(total);
 
-
   cartButton.classList.toggle(
     "hidden",
     cart.length === 0
   );
-
 
   if (!cart.length) {
 
@@ -483,92 +478,85 @@ function renderCart() {
     return;
   }
 
-
   cartItems.innerHTML =
-    cart.map(item => `
+    cart
+      .map(item => `
+        <div class="cart-row">
 
-      <div class="cart-row">
+          <div class="cart-info">
 
-        <div class="cart-info">
+            <b>
+              ${item.productName}
+            </b>
 
-          <b>
-            ${item.productName}
-          </b>
+            <div class="product-meta">
+              ${item.flavorName}
+            </div>
 
-          <div class="product-meta">
-            ${item.flavorName}
+            <div class="product-meta">
+              ${money(item.price)} × ${item.qty}
+            </div>
+
           </div>
 
-          <div class="product-meta">
-            ${money(item.price)} × ${item.qty}
+          <div class="qty">
+
+            <button
+              onclick='changeQty(
+                ${item.productId},
+                ${JSON.stringify(item.flavorName)},
+                -1
+              )'
+            >
+              −
+            </button>
+
+            <b>
+              ${item.qty}
+            </b>
+
+            <button
+              onclick='changeQty(
+                ${item.productId},
+                ${JSON.stringify(item.flavorName)},
+                1
+              )'
+            >
+              +
+            </button>
+
           </div>
 
         </div>
-
-
-        <div class="qty">
-
-          <button
-            onclick='changeQty(
-              ${item.productId},
-              ${JSON.stringify(item.flavorName)},
-              -1
-            )'
-          >
-            −
-          </button>
-
-          <b>
-            ${item.qty}
-          </b>
-
-          <button
-            onclick='changeQty(
-              ${item.productId},
-              ${JSON.stringify(item.flavorName)},
-              1
-            )'
-          >
-            +
-          </button>
-
-        </div>
-
-      </div>
-
-    `)
-    .join("");
+      `)
+      .join("");
 }
 
-
 // ===============================
-// ОТКРЫТИЕ КОРЗИНЫ
+// КОРЗИНА — ОКНО
 // ===============================
 
 function openCart() {
 
   sheet.classList.add("open");
-
   backdrop.classList.add("open");
 }
-
 
 function closeCart() {
 
   sheet.classList.remove("open");
-
   backdrop.classList.remove("open");
 }
 
+cartButton.onclick =
+  openCart;
 
-cartButton.onclick = openCart;
-
-document.querySelector("#closeCart").onclick =
-  closeCart;
+document.querySelector("#closeCart")
+  .onclick =
+    closeCart;
 
 backdrop.onclick =
   closeCart;
-
 
 // ===============================
 // ПОИСК
@@ -577,9 +565,8 @@ backdrop.onclick =
 searchEl.oninput =
   renderProducts;
 
-
 // ===============================
-// ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+// ВКЛАДКИ
 // ===============================
 
 document
@@ -600,7 +587,6 @@ document
           x.classList.remove("active")
         );
 
-
       tab.classList.add("active");
 
       document
@@ -608,14 +594,12 @@ document
           "#" + tab.dataset.tab
         )
         .classList.add("active");
-
     };
 
   });
 
-
 // ===============================
-// ОФОРМЛЕНИЕ ЗАКАЗА
+// ЗАКАЗ
 // ===============================
 
 document
@@ -624,39 +608,32 @@ document
 
     if (!cart.length) return;
 
-
     const total =
       cart.reduce(
         (sum, item) =>
-          sum + item.price * item.qty,
+          sum +
+          item.price *
+          item.qty,
         0
       );
 
-
     const items =
       cart.map(item => ({
-
         name:
           `${item.productName} — ${item.flavorName}`,
-
-        price:
-          item.price,
-
-        qty:
-          item.qty
-
+        price: item.price,
+        qty: item.qty
       }));
 
-
     const user =
-      tg?.initDataUnsafe?.user || null;
-
+      tg?.initDataUnsafe?.user ||
+      null;
 
     try {
 
       const response =
         await fetch(
-          "https://ghostmarket-theta.vercel.app/api/order",
+          "/api/order",
           {
             method: "POST",
 
@@ -665,43 +642,33 @@ document
                 "application/json"
             },
 
-            body: JSON.stringify({
-
-              items,
-              total,
-              user
-
-            })
-
+            body:
+              JSON.stringify({
+                items,
+                total,
+                user
+              })
           }
         );
-
 
       const result =
         await response.json();
 
-
       if (!result.ok) {
-
         throw new Error(
           result.error ||
           "Ошибка отправки"
         );
-
       }
-
 
       cart = [];
 
       renderCart();
-
       closeCart();
-
 
       if (tg?.showPopup) {
 
         tg.showPopup({
-
           title:
             "Заказ принят 👻",
 
@@ -713,7 +680,6 @@ document
               type: "ok"
             }
           ]
-
         });
 
       } else {
@@ -721,19 +687,15 @@ document
         alert(
           "Заказ успешно отправлен!"
         );
-
       }
-
 
     } catch (error) {
 
       console.error(error);
 
-
       if (tg?.showPopup) {
 
         tg.showPopup({
-
           title:
             "Ошибка",
 
@@ -745,7 +707,6 @@ document
               type: "ok"
             }
           ]
-
         });
 
       } else {
@@ -753,417 +714,120 @@ document
         alert(
           "Не удалось отправить заказ."
         );
-
       }
-
     }
-
   };
 
-// ===============================
-// АДМИН-ПАНЕЛЬ
-// ===============================
+// =====================================================
+// АДМИН-ПАНЕЛЬ GHOSTMARKET
+// =====================================================
 
-const ADMIN_ID = "1710854749";
+const ADMIN_ID =
+  "1710854749";
 
 function isAdmin() {
-  return String(tg?.initDataUnsafe?.user?.id || "") === ADMIN_ID;
+
+  return String(
+    tg?.initDataUnsafe?.user?.id || ""
+  ) === ADMIN_ID;
 }
+
+// ===============================
+// КНОПКА АДМИНКИ
+// ===============================
 
 function createAdminButton() {
 
   if (!isAdmin()) return;
 
-  const button = document.createElement("button");
+  if (
+    document.querySelector(".admin-button")
+  ) return;
 
-  button.textContent = "⚙️ Админка";
-  button.className = "admin-button";
+  const button =
+    document.createElement("button");
+
+  button.textContent =
+    "⚙️ Управление каталогом";
+
+  button.className =
+    "admin-button";
 
   button.style.cssText = `
     width: calc(100% - 32px);
     margin: 16px;
-    padding: 14px;
+    padding: 15px;
     border: 0;
-    border-radius: 14px;
+    border-radius: 16px;
     background: #111;
-    color: white;
+    color: #fff;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
   `;
 
-  button.onclick = openAdminPanel;
+  button.onclick =
+    openAdminPanel;
 
-  document.querySelector(".app").prepend(button);
+  document
+    .querySelector(".app")
+    .prepend(button);
 }
 
+// ===============================
+// АДМИНКА
+// ===============================
 
 function openAdminPanel() {
 
-  let panel = document.querySelector("#adminPanel");
+  let panel =
+    document.querySelector(
+      "#adminPanel"
+    );
 
   if (!panel) {
 
-    panel = document.createElement("div");
+    panel =
+      document.createElement("div");
 
-    panel.id = "adminPanel";
+    panel.id =
+      "adminPanel";
 
     panel.innerHTML = `
-      <div style="
-        position:fixed;
-        inset:0;
-        background:rgba(0,0,0,.7);
-        z-index:9999;
-        padding:20px;
-        overflow:auto;
-      ">
+      <div
+        class="ghost-admin-overlay"
+        id="adminOverlay"
+      >
 
-        <div style="
-          max-width:520px;
-          margin:20px auto;
-          background:white;
-          border-radius:22px;
-          padding:20px;
-        ">
+        <div class="ghost-admin">
 
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:20px;
-          ">
+          <div class="ghost-admin-header">
 
-            <h2 style="margin:0">
-              ⚙️ Админка
-            </h2>
+            <div>
+              <div class="ghost-admin-label">
+                GHOSTSHOP
+              </div>
+
+              <h2>
+                ⚙️ Каталог
+              </h2>
+
+              <p>
+                Управление товарами
+              </p>
+            </div>
 
             <button
               id="closeAdmin"
-              style="
-                border:0;
-                background:#eee;
-                border-radius:10px;
-                width:40px;
-                height:40px;
-                font-size:24px;
-              "
+              class="ghost-close"
             >
               ×
             </button>
 
           </div>
 
-          <button id="addProductAdmin"
-            style="
-              width:100%;
-              padding:14px;
-              margin-bottom:10px;
-              border:0;
-              border-radius:14px;
-              background:#111;
-              color:white;
-              font-weight:700;
-              font-size:15px;
-            "
-          >
-            ➕ Добавить товар
-          </button>
-
-          <div id="adminProducts"></div>
-
-        </div>
-
-      </div>
-    `;
-
-    document.body.appendChild(panel);
-
-    document.querySelector("#closeAdmin").onclick = () => {
-      panel.remove();
-    };
-
-    document.querySelector("#addProductAdmin").onclick =
-      addProductAdmin;
-  }
-
-  renderAdminProducts();
-}
-
-
-function renderAdminProducts() {
-
-  const container =
-    document.querySelector("#adminProducts");
-
-  if (!container) return;
-
-  container.innerHTML = products.map(product => `
-
-    <div style="
-      border:1px solid #ddd;
-      border-radius:16px;
-      padding:14px;
-      margin-bottom:12px;
-    ">
-
-      <div style="
-        font-weight:700;
-        font-size:17px;
-        margin-bottom:5px;
-      ">
-        ${product.name}
-      </div>
-
-      <div style="
-        color:#777;
-        margin-bottom:10px;
-      ">
-        ${product.category}
-      </div>
-
-      <div style="margin-bottom:12px;">
-        ${product.flavors.map(f =>
-          `${f.name} — ${money(f.price)}`
-        ).join("<br>")}
-      </div>
-
-      <button
-        onclick="editProductAdmin(${product.id})"
-        style="
-          padding:10px 12px;
-          border:0;
-          border-radius:10px;
-          margin-right:5px;
-        "
-      >
-        ✏️ Изменить
-      </button>
-
-      <button
-        onclick="deleteProductAdmin(${product.id})"
-        style="
-          padding:10px 12px;
-          border:0;
-          border-radius:10px;
-          background:#eee;
-        "
-      >
-        🗑️ Удалить
-      </button>
-
-    </div>
-
-  `).join("");
-}
-
-
-async function saveProductsAdmin() {
-
-  try {
-
-    const user =
-      tg?.initDataUnsafe?.user || null;
-
-    if (!user || String(user.id) !== ADMIN_ID) {
-      alert("Доступ запрещён");
-      return;
-    }
-
-    const response =
-      await fetch("/api/products", {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          products,
-          user
-        })
-      });
-
-    const result =
-      await response.json();
-
-    if (!result.ok) {
-      throw new Error(
-        result.error || "Ошибка сохранения"
-      );
-    }
-
-    alert("✅ Товары сохранены");
-
-    renderCategories();
-    renderProducts();
-
-    renderAdminProducts();
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "❌ Ошибка сохранения: " +
-      error.message
-    );
-  }
-}
-
-
-function addProductAdmin() {
-
-  const name =
-    prompt("Название товара:");
-
-  if (!name) return;
-
-  const category =
-    prompt(
-      "Категория:",
-      "Жидкости"
-    );
-
-  if (!category) return;
-
-  const image =
-    prompt(
-      "Файл фотографии:",
-      "logo.jpg"
-    );
-
-  if (!image) return;
-
-  const flavorName =
-    prompt(
-      "Название варианта:",
-      "Вариант 1"
-    );
-
-  if (!flavorName) return;
-
-  const price =
-    Number(
-      prompt(
-        "Цена:",
-        "500"
-      )
-    );
-
-  if (!price) return;
-
-  const newProduct = {
-
-    id:
-      Date.now(),
-
-    name,
-
-    category,
-
-    image,
-
-    flavors: [
-      {
-        name: flavorName,
-        price
-      }
-    ]
-  };
-
-  products.push(newProduct);
-
-  saveProductsAdmin();
-}
-
-
-function editProductAdmin(productId) {
-
-  const product =
-    products.find(
-      p => p.id === productId
-    );
-
-  if (!product) return;
-
-  const name =
-    prompt(
-      "Название товара:",
-      product.name
-    );
-
-  if (!name) return;
-
-  const category =
-    prompt(
-      "Категория:",
-      product.category
-    );
-
-  if (!category) return;
-
-  const image =
-    prompt(
-      "Файл фотографии:",
-      product.image
-    );
-
-  if (!image) return;
-
-  product.name = name;
-  product.category = category;
-  product.image = image;
-
-  product.flavors.forEach(flavor => {
-
-    const newPrice =
-      prompt(
-        `Цена для "${flavor.name}":`,
-        flavor.price
-      );
-
-    if (
-      newPrice !== null &&
-      !isNaN(Number(newPrice))
-    ) {
-      flavor.price =
-        Number(newPrice);
-    }
-
-  });
-
-  saveProductsAdmin();
-}
-
-
-function deleteProductAdmin(productId) {
-
-  const product =
-    products.find(
-      p => p.id === productId
-    );
-
-  if (!product) return;
-
-  const confirmed =
-    confirm(
-      `Удалить "${product.name}"?`
-    );
-
-  if (!confirmed) return;
-
-  products =
-    products.filter(
-      p => p.id !== productId
-    );
-
-  saveProductsAdmin();
-}
-// ===============================
-// ЗАПУСК
-// ===============================
-
-loadProducts();
-
-renderCart();
-createAdminButton();
+          <button
+            id="addProductAdmin"
+            class="g
+```
