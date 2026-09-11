@@ -10,9 +10,81 @@ if (tg) {
 // ===============================
 
 let products = [];
-
 async function loadProducts() {
+  const productsContainer = document.getElementById("products");
+
   try {
+    console.log("Начинаем загрузку товаров...");
+
+    const response = await fetch("/api/products");
+
+    console.log("Ответ API:", response.status);
+
+    if (!response.ok) {
+      throw new Error(
+        "API вернул ошибку: " + response.status
+      );
+    }
+
+    const data = await response.json();
+
+    console.log("Данные API:", data);
+
+    if (!data.ok) {
+      throw new Error(
+        data.error || "API вернул ok:false"
+      );
+    }
+
+    if (!Array.isArray(data.products)) {
+      throw new Error(
+        "data.products не является массивом"
+      );
+    }
+
+    products = data.products;
+
+    console.log(
+      "Товары успешно загружены:",
+      products
+    );
+
+    renderCategories();
+    renderProducts();
+
+  } catch (error) {
+
+    console.error(
+      "ОШИБКА КАТАЛОГА:",
+      error
+    );
+
+    if (productsContainer) {
+      productsContainer.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">👻</div>
+
+          <h2>Ошибка загрузки</h2>
+
+          <p>
+            ${error.message}
+          </p>
+        </div>
+      `;
+    }
+  }
+
+  // Админку запускаем отдельно,
+  // чтобы её ошибка не ломала каталог
+  try {
+    createAdminButton();
+  } catch (error) {
+    console.error(
+      "Ошибка админки:",
+      error
+    );
+  }
+}
     const response = await fetch("/api/products");
 
     if (!response.ok) {
