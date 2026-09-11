@@ -1,3 +1,4 @@
+alert("APP.JS ЗАПУЩЕН");
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
