@@ -1,15 +1,14 @@
-const tg = window\.Telegram?.WebApp;
+const tg = window.Telegram?.WebApp;
 
 if (tg) {
   tg.ready();
   tg.expand();
 }
 
-
-
 // ===============================
 // ТОВАРЫ
 // ===============================
+
 let products = [];
 
 async function loadProducts() {
@@ -26,38 +25,39 @@ async function loadProducts() {
       throw new Error("Неверный формат товаров");
     }
 
-products = data.products;
+    products = data.products;
 
-console.log("Товары загружены:", products);
+    console.log("Товары загружены:", products);
 
-renderCategories();
-renderProducts();
+    renderCategories();
+    renderProducts();
+
+    createAdminButton();
+
   } catch (error) {
     console.error("Ошибка загрузки товаров:", error);
 
     const productsContainer = document.getElementById("products");
 
     if (productsContainer) {
-      productsContainer.innerHTML = \`
-        \<div class="empty">
-          \<div class="empty-icon">👻\</div>
-          \<h2>Каталог временно недоступен\</h2>
-          \<p>Попробуйте обновить приложение.\</p>
-        \</div>
-      \`;
+      productsContainer.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">👻</div>
+          <h2>Каталог временно недоступен</h2>
+          <p>Попробуйте обновить приложение.</p>
+        </div>
+      `;
     }
   }
 }
+
 // ===============================
 // СОСТОЯНИЕ
 // ===============================
 
 let category = "Все";
 let cart = [];
-
 let selectedProduct = null;
-
-
 
 // ===============================
 // ЭЛЕМЕНТЫ
@@ -75,8 +75,6 @@ const cartItems = document.querySelector("#cartItems");
 const sheet = document.querySelector("#cartSheet");
 const backdrop = document.querySelector("#backdrop");
 
-
-
 // ===============================
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ===============================
@@ -85,13 +83,12 @@ function money(n) {
   return new Intl.NumberFormat("ru-RU").format(n) + " ₽";
 }
 
-
-
 // ===============================
 // КАТЕГОРИИ
 // ===============================
 
 function renderCategories() {
+  if (!categoriesEl) return;
 
   const cats = [
     "Все",
@@ -99,45 +96,40 @@ function renderCategories() {
   ];
 
   categoriesEl.innerHTML = cats
-    .map(c => \`
-      \<button
+    .map(c => `
+      <button
         class="category ${c === category ? "active" : ""}"
         data-category="${c}"
-      \>
+      >
         ${c}
-      \</button>
-    \`)
+      </button>
+    `)
     .join("");
 
   categoriesEl
     .querySelectorAll(".category")
     .forEach(button => {
-
       button.onclick = () => {
-
         category = button.dataset.category;
 
         renderCategories();
         renderProducts();
       };
-
     });
 }
-
-
 
 // ===============================
 // КАТАЛОГ
 // ===============================
 
 function renderProducts() {
+  if (!productsEl || !searchEl) return;
 
   const q = searchEl.value
     .trim()
     .toLowerCase();
 
   const list = products.filter(product => {
-
     const categoryMatch =
       category === "Все" ||
       product.category === category;
@@ -148,156 +140,136 @@ function renderProducts() {
     return categoryMatch && searchMatch;
   });
 
-
-
   productsEl.innerHTML = list
-    .map(product => \`
+    .map(product => {
+      const prices = Array.isArray(product.flavors)
+        ? product.flavors.map(f => Number(f.price) || 0)
+        : [0];
 
-      \<article class="product">
+      const minPrice = Math.min(...prices);
 
-        \<img
-          class="product-img"
-          src="${product.image}"
-          alt="${product.name}"
-        \>
+      return `
+        <article class="product">
 
-        \<div class="product-body">
+          <img
+            class="product-img"
+            src="${product.image || "logo.jpg"}"
+            alt="${product.name}"
+          >
 
-          \<div class="product-name">
-            ${product.name}
-          \</div>
+          <div class="product-body">
 
-          \<div class="product-meta">
-            ${product.category}
-          \</div>
+            <div class="product-name">
+              ${product.name}
+            </div>
 
-          \<div class="product-bottom">
+            <div class="product-meta">
+              ${product.category}
+            </div>
 
-            \<span class="price">
-              от ${money(Math.min(
-                ...product.flavors.map(f => f.price)
-              ))}
-            \</span>
+            <div class="product-bottom">
 
-            \<button
-              class="add"
-              data-id="${product.id}"
-            \>
-              Выбрать
-            \</button>
+              <span class="price">
+                от ${money(minPrice)}
+              </span>
 
-          \</div>
+              <button
+                class="add"
+                data-id="${product.id}"
+              >
+                Выбрать
+              </button>
 
-        \</div>
+            </div>
 
-      \</article>
+          </div>
 
-    \`)
+        </article>
+      `;
+    })
     .join("");
-
-
 
   productsEl
     .querySelectorAll(".add")
     .forEach(button => {
-
       button.onclick = () => {
-
         const productId =
           Number(button.dataset.id);
 
         openFlavorSelector(productId);
-
       };
-
     });
 
-
-
   if (!list.length) {
-
-    productsEl.innerHTML = \`
-      \<div
+    productsEl.innerHTML = `
+      <div
         class="empty"
         style="grid-column:1/-1"
-      \>
-        \<h2>Ничего не найдено\</h2>
-      \</div>
-    \`;
+      >
+        <h2>Ничего не найдено</h2>
+      </div>
+    `;
   }
 }
-
-
 
 // ===============================
 // ОКНО ВЫБОРА ВКУСА
 // ===============================
 
 function openFlavorSelector(productId) {
-
   selectedProduct =
     products.find(p => p.id === productId);
 
   if (!selectedProduct) return;
 
-
-
   let modal =
     document.querySelector("#flavorModal");
 
-
-
   if (!modal) {
-
     modal = document.createElement("div");
 
     modal.id = "flavorModal";
 
-    modal.innerHTML = \`
-      \<div class="flavor-overlay">
+    modal.innerHTML = `
+      <div class="flavor-overlay">
 
-        \<div class="flavor-window">
+        <div class="flavor-window">
 
-          \<button
+          <button
             id="closeFlavor"
             class="flavor-close"
-          \>
+          >
             ×
-          \</button>
+          </button>
 
-          \<img
+          <img
             id="flavorImage"
             class="flavor-image"
             src=""
             alt=""
-          \>
+          >
 
-          \<h2 id="flavorTitle">\</h2>
+          <h2 id="flavorTitle"></h2>
 
-          \<p class="flavor-subtitle">
+          <p class="flavor-subtitle">
             Выберите вкус
-          \</p>
+          </p>
 
-          \<div id="flavorsList">\</div>
+          <div id="flavorsList"></div>
 
-        \</div>
+        </div>
 
-      \</div>
-    \`;
+      </div>
+    `;
 
     document.body.appendChild(modal);
-
-
 
     document.querySelector("#closeFlavor").onclick =
       closeFlavorSelector;
 
-
-
     modal
       .querySelector(".flavor-overlay")
-      .onclick = (event) => {
-
+      .onclick = event => {
         if (
           event.target.classList.contains(
             "flavor-overlay"
@@ -305,55 +277,40 @@ function openFlavorSelector(productId) {
         ) {
           closeFlavorSelector();
         }
-
       };
   }
 
-
-
   document.querySelector("#flavorImage").src =
-    selectedProduct.image;
+    selectedProduct.image || "logo.jpg";
 
   document.querySelector("#flavorTitle").textContent =
     selectedProduct.name;
 
-
-
   const flavorsList =
     document.querySelector("#flavorsList");
 
-
-
   flavorsList.innerHTML =
     selectedProduct.flavors
-      .map((flavor, index) => \`
-
-        \<button
+      .map((flavor, index) => `
+        <button
           class="flavor-item"
           data-flavor="${index}"
-        \>
-
-          \<span>
+        >
+          <span>
             ${flavor.name}
-          \</span>
+          </span>
 
-          \<strong>
+          <strong>
             ${money(flavor.price)}
-          \</strong>
-
-        \</button>
-
-      \`)
+          </strong>
+        </button>
+      `)
       .join("");
-
-
 
   flavorsList
     .querySelectorAll(".flavor-item")
     .forEach(button => {
-
       button.onclick = () => {
-
         const index =
           Number(button.dataset.flavor);
 
@@ -361,132 +318,91 @@ function openFlavorSelector(productId) {
           selectedProduct,
           selectedProduct.flavors[index]
         );
-
       };
-
     });
-
-
 
   modal.classList.add("open");
 }
 
-
-
 function closeFlavorSelector() {
-
   const modal =
     document.querySelector("#flavorModal");
 
   if (modal) {
     modal.classList.remove("open");
   }
-
 }
-
-
 
 // ===============================
 // ДОБАВЛЕНИЕ В КОРЗИНУ
 // ===============================
 
 function addFlavorToCart(product, flavor) {
-
   const existing =
     cart.find(item =>
       item.productId === product.id &&
       item.flavorName === flavor.name
     );
 
-
-
   if (existing) {
-
     existing.qty++;
-
   } else {
-
     cart.push({
-
       productId: product.id,
-
       productName: product.name,
-
       flavorName: flavor.name,
-
-      price: flavor.price,
-
+      price: Number(flavor.price),
       qty: 1
-
     });
-
   }
 
-
-
   renderCart();
-
   closeFlavorSelector();
-
   openCart();
 }
-
-
 
 // ===============================
 // КОЛИЧЕСТВО
 // ===============================
 
 function changeQty(productId, flavorName, delta) {
-
   const item =
     cart.find(x =>
       x.productId === productId &&
       x.flavorName === flavorName
     );
 
-
-
   if (!item) return;
-
-
 
   item.qty += delta;
 
-
-
   if (item.qty <= 0) {
-
     cart = cart.filter(x =>
       !(
         x.productId === productId &&
         x.flavorName === flavorName
       )
     );
-
   }
-
-
 
   renderCart();
 }
-
-
 
 // ===============================
 // КОРЗИНА
 // ===============================
 
 function renderCart() {
+  if (!cartButton || !cartTotal || !sheetTotal || !cartItems) {
+    return;
+  }
 
   const total =
     cart.reduce(
       (sum, item) =>
-        sum + item.price \* item.qty,
+        sum + item.price * item.qty,
       0
     );
-
-
 
   cartTotal.textContent =
     money(total);
@@ -494,127 +410,114 @@ function renderCart() {
   sheetTotal.textContent =
     money(total);
 
-
-
   cartButton.classList.toggle(
     "hidden",
     cart.length === 0
   );
 
-
-
   if (!cart.length) {
-
-    cartItems.innerHTML = \`
-      \<div class="empty">
-        \<h2>Корзина пуста\</h2>
-      \</div>
-    \`;
+    cartItems.innerHTML = `
+      <div class="empty">
+        <h2>Корзина пуста</h2>
+      </div>
+    `;
 
     return;
   }
 
-
-
   cartItems.innerHTML =
-    cart.map(item => \`
+    cart.map(item => `
+      <div class="cart-row">
 
-      \<div class="cart-row">
+        <div class="cart-info">
 
-        \<div class="cart-info">
-
-          \<b>
+          <b>
             ${item.productName}
-          \</b>
+          </b>
 
-          \<div class="product-meta">
+          <div class="product-meta">
             ${item.flavorName}
-          \</div>
+          </div>
 
-          \<div class="product-meta">
+          <div class="product-meta">
             ${money(item.price)} × ${item.qty}
-          \</div>
+          </div>
 
-        \</div>
+        </div>
 
+        <div class="qty">
 
-
-        \<div class="qty">
-
-          \<button
+          <button
             onclick='changeQty(
               ${item.productId},
               ${JSON.stringify(item.flavorName)},
               -1
             )'
-          \>
+          >
             −
-          \</button>
+          </button>
 
-          \<b>
+          <b>
             ${item.qty}
-          \</b>
+          </b>
 
-          \<button
+          <button
             onclick='changeQty(
               ${item.productId},
               ${JSON.stringify(item.flavorName)},
               1
             )'
-          \>
-            \+
-          \</button>
+          >
+            +
+          </button>
 
-        \</div>
+        </div>
 
-      \</div>
-
-    \`)
+      </div>
+    `)
     .join("");
 }
-
-
 
 // ===============================
 // ОТКРЫТИЕ КОРЗИНЫ
 // ===============================
 
 function openCart() {
+  if (!sheet || !backdrop) return;
 
   sheet.classList.add("open");
-
   backdrop.classList.add("open");
 }
 
-
-
 function closeCart() {
+  if (!sheet || !backdrop) return;
 
   sheet.classList.remove("open");
-
   backdrop.classList.remove("open");
 }
 
+if (cartButton) {
+  cartButton.onclick = openCart;
+}
 
+const closeCartButton =
+  document.querySelector("#closeCart");
 
-cartButton.onclick = openCart;
+if (closeCartButton) {
+  closeCartButton.onclick = closeCart;
+}
 
-document.querySelector("#closeCart").onclick =
-  closeCart;
-
-backdrop.onclick =
-  closeCart;
-
-
+if (backdrop) {
+  backdrop.onclick = closeCart;
+}
 
 // ===============================
 // ПОИСК
 // ===============================
 
-searchEl.oninput =
-  renderProducts;
-
-
+if (searchEl) {
+  searchEl.oninput = renderProducts;
+}
 
 // ===============================
 // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
@@ -623,7 +526,6 @@ searchEl.oninput =
 document
   .querySelectorAll(".tab")
   .forEach(tab => {
-
     tab.onclick = () => {
 
       document
@@ -638,69 +540,56 @@ document
           x.classList.remove("active")
         );
 
-
-
       tab.classList.add("active");
 
-      document
-        .querySelector(
+      const target =
+        document.querySelector(
           "#" + tab.dataset.tab
-        )
-        .classList.add("active");
+        );
 
+      if (target) {
+        target.classList.add("active");
+      }
     };
-
   });
-
-
 
 // ===============================
 // ОФОРМЛЕНИЕ ЗАКАЗА
 // ===============================
 
-document
-  .querySelector("#checkoutButton")
-  .onclick = async () => {
+const checkoutButton =
+  document.querySelector("#checkoutButton");
+
+if (checkoutButton) {
+  checkoutButton.onclick = async () => {
 
     if (!cart.length) return;
-
-
 
     const total =
       cart.reduce(
         (sum, item) =>
-          sum + item.price \* item.qty,
+          sum + item.price * item.qty,
         0
       );
 
-
-
     const items =
       cart.map(item => ({
-
         name:
-          \`${item.productName} — ${item.flavorName}\`,
-
+          `${item.productName} — ${item.flavorName}`,
         price:
           item.price,
-
         qty:
           item.qty
-
       }));
-
-
 
     const user =
       tg?.initDataUnsafe?.user || null;
-
-
 
     try {
 
       const response =
         await fetch(
-          "[https://ghostmarket-theta.vercel.app/api/order](https://ghostmarket-theta.vercel.app/api/order)",
+          "/api/order",
           {
             method: "POST",
 
@@ -710,46 +599,30 @@ document
             },
 
             body: JSON.stringify({
-
               items,
               total,
               user
-
             })
-
           }
         );
-
-
 
       const result =
         await response.json();
 
-
-
       if (!result.ok) {
-
         throw new Error(
           result.error ||
           "Ошибка отправки"
         );
-
       }
-
-
 
       cart = [];
 
       renderCart();
-
       closeCart();
 
-
-
       if (tg?.showPopup) {
-
         tg.showPopup({
-
           title:
             "Заказ принят 👻",
 
@@ -761,29 +634,19 @@ document
               type: "ok"
             }
           ]
-
         });
-
       } else {
-
         alert(
           "Заказ успешно отправлен!"
         );
-
       }
-
-
 
     } catch (error) {
 
       console.error(error);
 
-
-
       if (tg?.showPopup) {
-
         tg.showPopup({
-
           title:
             "Ошибка",
 
@@ -795,41 +658,46 @@ document
               type: "ok"
             }
           ]
-
         });
-
       } else {
-
         alert(
           "Не удалось отправить заказ."
         );
-
       }
-
     }
-
   };
+}
 
 // ===============================
 // АДМИН-ПАНЕЛЬ
 // ===============================
 
-const ADMIN\_ID = "1710854749";
+const ADMIN_ID = "1710854749";
 
 function isAdmin() {
-  return String(tg?.initDataUnsafe?.user?.id || "") === ADMIN\_ID;
+  return String(
+    tg?.initDataUnsafe?.user?.id || ""
+  ) === ADMIN_ID;
 }
 
 function createAdminButton() {
 
   if (!isAdmin()) return;
 
-  const button = document.createElement("button");
+  if (document.querySelector(".admin-button")) {
+    return;
+  }
 
-  button.textContent = "⚙️ Админка";
-  button.className = "admin-button";
+  const button =
+    document.createElement("button");
 
-  button.style.cssText = \`
+  button.textContent =
+    "⚙️ Админка";
+
+  button.className =
+    "admin-button";
+
+  button.style.cssText = `
     width: calc(100% - 32px);
     margin: 16px;
     padding: 14px;
@@ -840,55 +708,66 @@ function createAdminButton() {
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
-  \`;
+  `;
 
-  button.onclick = openAdminPanel;
+  button.onclick =
+    openAdminPanel;
 
-  document.querySelector(".app").prepend(button);
+  const app =
+    document.querySelector(".app");
+
+  if (app) {
+    app.prepend(button);
+  }
 }
 
-
+// ===============================
+// АДМИНКА
+// ===============================
 
 function openAdminPanel() {
 
-  let panel = document.querySelector("#adminPanel");
+  let panel =
+    document.querySelector("#adminPanel");
 
   if (!panel) {
 
-    panel = document.createElement("div");
+    panel =
+      document.createElement("div");
 
-    panel.id = "adminPanel";
+    panel.id =
+      "adminPanel";
 
-    panel.innerHTML = \`
-      \<div style="
-        position\:fixed;
+    panel.innerHTML = `
+      <div style="
+        position:fixed;
         inset:0;
-        background\:rgba(0,0,0,.7);
+        background:rgba(0,0,0,.7);
         z-index:9999;
         padding:20px;
-        overflow\:auto;
+        overflow:auto;
       ">
 
-        \<div style="
+        <div style="
           max-width:520px;
           margin:20px auto;
-          background\:white;
+          background:white;
           border-radius:22px;
           padding:20px;
         ">
 
-          \<div style="
-            display\:flex;
-            justify-content\:space-between;
-            align-items\:center;
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
             margin-bottom:20px;
           ">
 
-            \<h2 style="margin:0">
+            <h2 style="margin:0">
               ⚙️ Админка
-            \</h2>
+            </h2>
 
-            \<button
+            <button
               id="closeAdmin"
               style="
                 border:0;
@@ -898,13 +777,14 @@ function openAdminPanel() {
                 height:40px;
                 font-size:24px;
               "
-            \>
+            >
               ×
-            \</button>
+            </button>
 
-          \</div>
+          </div>
 
-          \<button id="addProductAdmin"
+          <button
+            id="addProductAdmin"
             style="
               width:100%;
               padding:14px;
@@ -912,26 +792,27 @@ function openAdminPanel() {
               border:0;
               border-radius:14px;
               background:#111;
-              color\:white;
+              color:white;
               font-weight:700;
               font-size:15px;
             "
-          \>
+          >
             ➕ Добавить товар
-          \</button>
+          </button>
 
-          \<div id="adminProducts">\</div>
+          <div id="adminProducts"></div>
 
-        \</div>
+        </div>
 
-      \</div>
-    \`;
+      </div>
+    `;
 
     document.body.appendChild(panel);
 
-    document.querySelector("#closeAdmin").onclick = () => {
-      panel.remove();
-    };
+    document.querySelector("#closeAdmin").onclick =
+      () => {
+        panel.remove();
+      };
 
     document.querySelector("#addProductAdmin").onclick =
       addProductAdmin;
@@ -940,7 +821,9 @@ function openAdminPanel() {
   renderAdminProducts();
 }
 
-
+// ===============================
+// СПИСОК ТОВАРОВ В АДМИНКЕ
+// ===============================
 
 function renderAdminProducts() {
 
@@ -949,66 +832,72 @@ function renderAdminProducts() {
 
   if (!container) return;
 
-  container.innerHTML = products.map(product => \`
-
-    \<div style="
-      border:1px solid #ddd;
-      border-radius:16px;
-      padding:14px;
-      margin-bottom:12px;
-    ">
-
-      \<div style="
-        font-weight:700;
-        font-size:17px;
-        margin-bottom:5px;
+  container.innerHTML =
+    products.map(product => `
+      <div style="
+        border:1px solid #ddd;
+        border-radius:16px;
+        padding:14px;
+        margin-bottom:12px;
       ">
-        ${product.name}
-      \</div>
 
-      \<div style="
-        color:#777;
-        margin-bottom:10px;
-      ">
-        ${product.category}
-      \</div>
+        <div style="
+          font-weight:700;
+          font-size:17px;
+          margin-bottom:5px;
+        ">
+          ${product.name}
+        </div>
 
-      \<div style="margin-bottom:12px;">
-        ${product.flavors.map(f =>
-          \`${f.name} — ${money(f.price)}\`
-        ).join("\<br>")}
-      \</div>
+        <div style="
+          color:#777;
+          margin-bottom:10px;
+        ">
+          ${product.category}
+        </div>
 
-      \<button
-        onclick="editProductAdmin(${product.id})"
-        style="
-          padding:10px 12px;
-          border:0;
-          border-radius:10px;
-          margin-right:5px;
-        "
-      \>
-        ✏️ Изменить
-      \</button>
+        <div style="
+          margin-bottom:12px;
+        ">
+          ${product.flavors
+            .map(f =>
+              `${f.name} — ${money(f.price)}`
+            )
+            .join("<br>")}
+        </div>
 
-      \<button
-        onclick="deleteProductAdmin(${product.id})"
-        style="
-          padding:10px 12px;
-          border:0;
-          border-radius:10px;
-          background:#eee;
-        "
-      \>
-        🗑️ Удалить
-      \</button>
+        <button
+          onclick="editProductAdmin(${product.id})"
+          style="
+            padding:10px 12px;
+            border:0;
+            border-radius:10px;
+            margin-right:5px;
+          "
+        >
+          ✏️ Изменить
+        </button>
 
-    \</div>
+        <button
+          onclick="deleteProductAdmin(${product.id})"
+          style="
+            padding:10px 12px;
+            border:0;
+            border-radius:10px;
+            background:#eee;
+          "
+        >
+          🗑️ Удалить
+        </button>
 
-  \`).join("");
+      </div>
+    `)
+    .join("");
 }
 
-
+// ===============================
+// СОХРАНЕНИЕ ТОВАРОВ
+// ===============================
 
 async function saveProductsAdmin() {
 
@@ -1017,39 +906,48 @@ async function saveProductsAdmin() {
     const user =
       tg?.initDataUnsafe?.user || null;
 
-    if (!user || String(user.id) !== ADMIN\_ID) {
+    if (
+      !user ||
+      String(user.id) !== ADMIN_ID
+    ) {
       alert("Доступ запрещён");
       return;
     }
 
     const response =
-      await fetch("/api/products", {
-        method: "POST",
+      await fetch(
+        "/api/products",
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-        body: JSON.stringify({
-          products,
-          user
-        })
-      });
+          body: JSON.stringify({
+            products,
+            user
+          })
+        }
+      );
 
     const result =
       await response.json();
 
     if (!result.ok) {
       throw new Error(
-        result.error || "Ошибка сохранения"
+        result.error ||
+        "Ошибка сохранения"
       );
     }
 
-    alert("✅ Товары сохранены");
+    alert(
+      "✅ Товары сохранены"
+    );
 
     renderCategories();
     renderProducts();
-
     renderAdminProducts();
 
   } catch (error) {
@@ -1063,7 +961,9 @@ async function saveProductsAdmin() {
   }
 }
 
-
+// ===============================
+// ДОБАВИТЬ ТОВАР
+// ===============================
 
 function addProductAdmin() {
 
@@ -1107,9 +1007,7 @@ function addProductAdmin() {
   if (!price) return;
 
   const newProduct = {
-
-    id:
-      Date.now(),
+    id: Date.now(),
 
     name,
 
@@ -1130,7 +1028,9 @@ function addProductAdmin() {
   saveProductsAdmin();
 }
 
-
+// ===============================
+// ИЗМЕНИТЬ ТОВАР
+// ===============================
 
 function editProductAdmin(productId) {
 
@@ -1165,15 +1065,20 @@ function editProductAdmin(productId) {
 
   if (!image) return;
 
-  product.name = name;
-  product.category = category;
-  product.image = image;
+  product.name =
+    name;
+
+  product.category =
+    category;
+
+  product.image =
+    image;
 
   product.flavors.forEach(flavor => {
 
     const newPrice =
       prompt(
-        \`Цена для "${flavor.name}":\`,
+        `Цена для "${flavor.name}":`,
         flavor.price
       );
 
@@ -1184,13 +1089,14 @@ function editProductAdmin(productId) {
       flavor.price =
         Number(newPrice);
     }
-
   });
 
   saveProductsAdmin();
 }
 
-
+// ===============================
+// УДАЛИТЬ ТОВАР
+// ===============================
 
 function deleteProductAdmin(productId) {
 
@@ -1203,7 +1109,7 @@ function deleteProductAdmin(productId) {
 
   const confirmed =
     confirm(
-      \`Удалить "${product.name}"?\`
+      `Удалить "${product.name}"?`
     );
 
   if (!confirmed) return;
@@ -1215,11 +1121,10 @@ function deleteProductAdmin(productId) {
 
   saveProductsAdmin();
 }
+
 // ===============================
 // ЗАПУСК
 // ===============================
 
-loadProducts();
-
 renderCart();
-createAdminButton();
+loadProducts();
