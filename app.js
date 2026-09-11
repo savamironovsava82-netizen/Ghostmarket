@@ -25,11 +25,12 @@ async function loadProducts() {
       throw new Error("Неверный формат товаров");
     }
 
-    products = data.products;
+products = data.products;
 
-    renderCategories();
-    renderProducts();
+console.log("Товары загружены:", products);
 
+renderCategories();
+renderProducts();
   } catch (error) {
     console.error("Ошибка загрузки товаров:", error);
 
