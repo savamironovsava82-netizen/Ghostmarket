@@ -759,7 +759,405 @@ document
 
   };
 
+// ===============================
+// АДМИН-ПАНЕЛЬ
+// ===============================
 
+const ADMIN_ID = "1710854749";
+
+function isAdmin() {
+  return String(tg?.initDataUnsafe?.user?.id || "") === ADMIN_ID;
+}
+
+function createAdminButton() {
+
+  if (!isAdmin()) return;
+
+  const button = document.createElement("button");
+
+  button.textContent = "⚙️ Админка";
+  button.className = "admin-button";
+
+  button.style.cssText = `
+    width: calc(100% - 32px);
+    margin: 16px;
+    padding: 14px;
+    border: 0;
+    border-radius: 14px;
+    background: #111;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  `;
+
+  button.onclick = openAdminPanel;
+
+  document.querySelector(".app").prepend(button);
+}
+
+
+function openAdminPanel() {
+
+  let panel = document.querySelector("#adminPanel");
+
+  if (!panel) {
+
+    panel = document.createElement("div");
+
+    panel.id = "adminPanel";
+
+    panel.innerHTML = `
+      <div style="
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.7);
+        z-index:9999;
+        padding:20px;
+        overflow:auto;
+      ">
+
+        <div style="
+          max-width:520px;
+          margin:20px auto;
+          background:white;
+          border-radius:22px;
+          padding:20px;
+        ">
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+          ">
+
+            <h2 style="margin:0">
+              ⚙️ Админка
+            </h2>
+
+            <button
+              id="closeAdmin"
+              style="
+                border:0;
+                background:#eee;
+                border-radius:10px;
+                width:40px;
+                height:40px;
+                font-size:24px;
+              "
+            >
+              ×
+            </button>
+
+          </div>
+
+          <button id="addProductAdmin"
+            style="
+              width:100%;
+              padding:14px;
+              margin-bottom:10px;
+              border:0;
+              border-radius:14px;
+              background:#111;
+              color:white;
+              font-weight:700;
+              font-size:15px;
+            "
+          >
+            ➕ Добавить товар
+          </button>
+
+          <div id="adminProducts"></div>
+
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    document.querySelector("#closeAdmin").onclick = () => {
+      panel.remove();
+    };
+
+    document.querySelector("#addProductAdmin").onclick =
+      addProductAdmin;
+  }
+
+  renderAdminProducts();
+}
+
+
+function renderAdminProducts() {
+
+  const container =
+    document.querySelector("#adminProducts");
+
+  if (!container) return;
+
+  container.innerHTML = products.map(product => `
+
+    <div style="
+      border:1px solid #ddd;
+      border-radius:16px;
+      padding:14px;
+      margin-bottom:12px;
+    ">
+
+      <div style="
+        font-weight:700;
+        font-size:17px;
+        margin-bottom:5px;
+      ">
+        ${product.name}
+      </div>
+
+      <div style="
+        color:#777;
+        margin-bottom:10px;
+      ">
+        ${product.category}
+      </div>
+
+      <div style="margin-bottom:12px;">
+        ${product.flavors.map(f =>
+          `${f.name} — ${money(f.price)}`
+        ).join("<br>")}
+      </div>
+
+      <button
+        onclick="editProductAdmin(${product.id})"
+        style="
+          padding:10px 12px;
+          border:0;
+          border-radius:10px;
+          margin-right:5px;
+        "
+      >
+        ✏️ Изменить
+      </button>
+
+      <button
+        onclick="deleteProductAdmin(${product.id})"
+        style="
+          padding:10px 12px;
+          border:0;
+          border-radius:10px;
+          background:#eee;
+        "
+      >
+        🗑️ Удалить
+      </button>
+
+    </div>
+
+  `).join("");
+}
+
+
+async function saveProductsAdmin() {
+
+  try {
+
+    const user =
+      tg?.initDataUnsafe?.user || null;
+
+    if (!user || String(user.id) !== ADMIN_ID) {
+      alert("Доступ запрещён");
+      return;
+    }
+
+    const response =
+      await fetch("/api/products", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          products,
+          user
+        })
+      });
+
+    const result =
+      await response.json();
+
+    if (!result.ok) {
+      throw new Error(
+        result.error || "Ошибка сохранения"
+      );
+    }
+
+    alert("✅ Товары сохранены");
+
+    renderCategories();
+    renderProducts();
+
+    renderAdminProducts();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "❌ Ошибка сохранения: " +
+      error.message
+    );
+  }
+}
+
+
+function addProductAdmin() {
+
+  const name =
+    prompt("Название товара:");
+
+  if (!name) return;
+
+  const category =
+    prompt(
+      "Категория:",
+      "Жидкости"
+    );
+
+  if (!category) return;
+
+  const image =
+    prompt(
+      "Файл фотографии:",
+      "logo.jpg"
+    );
+
+  if (!image) return;
+
+  const flavorName =
+    prompt(
+      "Название варианта:",
+      "Вариант 1"
+    );
+
+  if (!flavorName) return;
+
+  const price =
+    Number(
+      prompt(
+        "Цена:",
+        "500"
+      )
+    );
+
+  if (!price) return;
+
+  const newProduct = {
+
+    id:
+      Date.now(),
+
+    name,
+
+    category,
+
+    image,
+
+    flavors: [
+      {
+        name: flavorName,
+        price
+      }
+    ]
+  };
+
+  products.push(newProduct);
+
+  saveProductsAdmin();
+}
+
+
+function editProductAdmin(productId) {
+
+  const product =
+    products.find(
+      p => p.id === productId
+    );
+
+  if (!product) return;
+
+  const name =
+    prompt(
+      "Название товара:",
+      product.name
+    );
+
+  if (!name) return;
+
+  const category =
+    prompt(
+      "Категория:",
+      product.category
+    );
+
+  if (!category) return;
+
+  const image =
+    prompt(
+      "Файл фотографии:",
+      product.image
+    );
+
+  if (!image) return;
+
+  product.name = name;
+  product.category = category;
+  product.image = image;
+
+  product.flavors.forEach(flavor => {
+
+    const newPrice =
+      prompt(
+        `Цена для "${flavor.name}":`,
+        flavor.price
+      );
+
+    if (
+      newPrice !== null &&
+      !isNaN(Number(newPrice))
+    ) {
+      flavor.price =
+        Number(newPrice);
+    }
+
+  });
+
+  saveProductsAdmin();
+}
+
+
+function deleteProductAdmin(productId) {
+
+  const product =
+    products.find(
+      p => p.id === productId
+    );
+
+  if (!product) return;
+
+  const confirmed =
+    confirm(
+      `Удалить "${product.name}"?`
+    );
+
+  if (!confirmed) return;
+
+  products =
+    products.filter(
+      p => p.id !== productId
+    );
+
+  saveProductsAdmin();
+}
 // ===============================
 // ЗАПУСК
 // ===============================
@@ -767,3 +1165,4 @@ document
 loadProducts();
 
 renderCart();
+createAdminButton();
